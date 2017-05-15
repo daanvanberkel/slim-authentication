@@ -9,6 +9,10 @@ use Slim\Http\Response;
 
 class UserController {
 	public function login(Request $request, Response $response): Response {
+	    if (isset($_SESSION['dvb_id_user']) && isset($_SESSION['dvb_loggedin']) && $_SESSION['dvb_loggedin'] == true) {
+	        return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_login_url'));
+        }
+
 		$view = DvbSlimAuthentication::getInstance()->getConfigItem('login_template');
 		$model = DvbSlimAuthentication::getInstance()->getModel();
 
