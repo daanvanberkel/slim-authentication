@@ -37,6 +37,8 @@ class UserController {
 					if (empty($user->getTwoFactorCode()) && DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled')) {
 						$user = $model->generateTwoFactorSecret($user);
 
+                        $user = $model->saveUser($user);
+
 						$two_factor_view = sprintf(DvbSlimAuthentication::getInstance()->getConfigItem('two_factory_secret_template'), $model->getTwoFactorInstance()->getQRCodeImageAsDataUri($user->getName(), $user->getTwoFactorCode()));
 
 						return $response->write($two_factor_view);
