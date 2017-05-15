@@ -1,0 +1,23 @@
+{
+    "name": "daanvanberkel/slim-authentication",
+    "description": "PHP Slim authentication",
+    "type": "library",
+    "require": {
+        "slim/slim": "^3.8",
+        "daanvanberkel/php-messages": "^0.0.1",
+        "php": ">=7.0",
+        "robthree/twofactorauth": "^1.6"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Daan van Berkel",
+            "email": "info@daanvanberkel.nl"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "DvbSlimAuthentication\\": "src/"
+        }
+    }
+}
