@@ -6,6 +6,8 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 
 class UserMiddleware {
+    public static $user;
+
     public function __invoke(Request $request, Response $response, callable $next): Response {
         if (
             !isset($_SESSION['dvb_id_user']) ||
@@ -19,6 +21,8 @@ class UserMiddleware {
         } catch (\Exception $exception) {
             return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('login_url'));
         }
+
+        self::$user = $user;
 
         $request = $request->withAttribute('dvb_user', $user);
 
