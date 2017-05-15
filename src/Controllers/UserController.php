@@ -153,7 +153,7 @@ class UserController {
                 throw new \Exception("Enter a valid email");
             }
 
-            if (!preg_match('/[\_\+\-\.\,\!\@\#\$\%\^\&\*\(\)\;\\\/\|\<\>\"\'\?\:]+/', $password1)) {
+            if (!preg_match('/[\_\+\-\.\,\!\@\#\$\%\^\&\*\(\)\;\/\|\<\>\"\'\?\:]+/', $password1)) {
                 throw new \Exception("The password must contain at least one special character");
             }
 
