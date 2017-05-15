@@ -13,9 +13,9 @@ class DvbSlimAuthentication {
 	/**
 	 * @return \DvbSlimAuthentication\DvbSlimAuthentication
 	 */
-	public static function getInstance(): self {
+	public static function getInstance(array $config = array()): self {
 		if (!self::$instance) {
-			self::$instance = new self();
+			self::$instance = new self($config);
 		}
 
 		return self::$instance;
@@ -46,7 +46,7 @@ class DvbSlimAuthentication {
 	 *
 	 * @param array $config
 	 */
-	public function __construct(array $config = array()) {
+	private function __construct(array $config = array()) {
 		// Start session if not already
 		if (!session_id()) {
 			session_start();
