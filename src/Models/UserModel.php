@@ -195,7 +195,7 @@ class UserModel {
 	}
 
 	public function validatePassword(User $user, string $password): bool {
-		return password_verify($password . $user->getSecret(), $password);
+		return password_verify($password . $user->getSecret(), $user->getPassword());
 	}
 
 	private function parseUser(\stdClass $class): User {
