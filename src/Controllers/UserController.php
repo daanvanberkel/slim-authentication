@@ -190,6 +190,8 @@ class UserController {
 
 	    session_destroy();
 
+	    setcookie('dvb_remember_me', "", (new \DateTime("-1 day"))->getTimestamp(), '/', $request->getUri()->getHost(), true, true);
+
 	    return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('login_url'));
     }
 }
