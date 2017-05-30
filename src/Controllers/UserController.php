@@ -190,6 +190,10 @@ class UserController {
 
 	    session_destroy();
 
+	    if (isset($_COOKIE['dvb_remember_me']) && !empty($_COOKIE['dvb_remember_me'])) {
+	    	DvbSlimAuthentication::getInstance()->getRememberTokenModel()->revokeToken($_COOKIE['dvb_remember_me']);
+	    }
+
 	    setcookie('dvb_remember_me', "", (new \DateTime("-1 day"))->getTimestamp(), '/', $request->getUri()->getHost(), true, true);
 
 	    return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('login_url'));
