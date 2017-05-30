@@ -15,6 +15,7 @@ class UserController {
 
 		$view = DvbSlimAuthentication::getInstance()->getConfigItem('login_template');
 		$model = DvbSlimAuthentication::getInstance()->getModel();
+		$remember_model = DvbSlimAuthentication::getInstance()->getRememberTokenModel();
 
 		if (empty($request->getParsedBodyParam('dvb_submit'))) {
 			return $response->write($view);
@@ -25,6 +26,7 @@ class UserController {
 				$email = $request->getParsedBodyParam('dvb_email');
 				$password = $request->getParsedBodyParam('dvb_password');
 				$two_factor = $request->getParsedBodyParam('dvb_two_factor');
+				$remember_me = (bool) $request->getParsedBodyParam('dvb_remember_me', false);
 
 				try {
 					if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -51,6 +53,12 @@ class UserController {
 
 					if (DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled') && !$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $two_factor)) {
 						throw new \Exception("Two factor code not valid");
+					}
+
+					if ($remember_me) {
+						$token = $remember_model->saveNewToken($user);
+
+						setcookie('dvb_remember_me', $token->getToken(), $token->getExpireDate()->getTimestamp(), '/', $request->getUri()->getHost(), true, true);
 					}
 
 					$_SESSION['dvb_loggedin'] = true;

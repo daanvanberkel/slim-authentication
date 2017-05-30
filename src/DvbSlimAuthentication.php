@@ -2,6 +2,8 @@
 
 namespace DvbSlimAuthentication;
 
+use DvbSlimAuthentication\Middleware\UserMiddleware;
+use DvbSlimAuthentication\Models\RememberTokenModel;
 use DvbSlimAuthentication\Models\UserModel;
 
 class DvbSlimAuthentication {
@@ -39,7 +41,12 @@ class DvbSlimAuthentication {
 	/**
 	 * @var \DvbSlimAuthentication\Models\UserModel
 	 */
-	private $model;
+	private $user_model;
+
+	/**
+	 * @var \DvbSlimAuthentication\Models\RememberTokenModel
+	 */
+	private $remember_token_model;
 
 	/**
 	 * DvbSlimAuthentication constructor.
@@ -109,11 +116,11 @@ class DvbSlimAuthentication {
 	}
 
 	/**
-	 * @return
+	 * @return \DvbSlimAuthentication\Middleware\UserMiddleware
 	 */
-	public function getMiddleware() {
+	public function getMiddleware(): UserMiddleware {
 		if (!$this->middleware) {
-			// TODO: Create new middleware instance
+			$this->middleware = new UserMiddleware();
 		}
 
 		return $this->middleware;
@@ -125,11 +132,27 @@ class DvbSlimAuthentication {
 	 */
 	public function getModel(): UserModel {
 		try {
-			if (!$this->model) {
-				$this->model = new UserModel($this->getPdo());
+			if (!$this->user_model) {
+				$this->user_model = new UserModel($this->getPdo());
 			}
 
-			return $this->model;
+			return $this->user_model;
+		} catch (\Throwable $exception) {
+			throw $exception;
+		}
+	}
+
+	/**
+	 * @return \DvbSlimAuthentication\Models\RememberTokenModel
+	 * @throws \Throwable
+	 */
+	public function getRememberTokenModel(): RememberTokenModel {
+		try {
+			if (!$this->remember_token_model) {
+				$this->remember_token_model = new RememberTokenModel($this->getPdo());
+			}
+
+			return $this->remember_token_model;
 		} catch (\Throwable $exception) {
 			throw $exception;
 		}
