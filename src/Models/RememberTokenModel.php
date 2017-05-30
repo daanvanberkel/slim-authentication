@@ -159,7 +159,7 @@ class RememberTokenModel {
 			SELECT
 				token
 			FROM
-				remember_token
+				remember_tokens
 			WHERE
 				token = :token
 		";
