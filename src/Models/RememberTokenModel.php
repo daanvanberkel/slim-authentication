@@ -152,6 +152,67 @@ class RememberTokenModel {
 		}
 	}
 
+	public function getToken(string $token): RememberToken {
+		$query = "
+			SELECT
+				id_remember_token,
+				id_user,
+				token,
+				revoked,
+				expire_date
+			FROM
+				remember_tokens
+			WHERE
+				token = :token
+		";
+
+		try {
+			$stmt = $this->pdo->prepare($query);
+			$stmt->execute(array(
+				":token" => $token
+			));
+
+			$result = $stmt->fetch(\PDO::FETCH_OBJ);
+
+			if (empty($result)) {
+				throw new \Exception("Token not found");
+			}
+
+			$token = new RememberToken();
+
+			$token
+				->setIdRememberToken($result->id_remember_token)
+				->setIdUser($result->id_user)
+				->setToken($result->token)
+				->setRevoked($result->revoked)
+				->setExpireDate($result->expire_date);
+
+			return $token;
+		} catch (\Exception $exception) {
+			throw $exception;
+		}
+	}
+
+	public function renewToken(User $user, string $token): RememberToken {
+		try {
+			$str_token = $token;
+			$token = $this->getToken($token);
+
+			if ($token->getIdUser() != $user->getIdUser()) {
+				throw new \Exception("User mismatch");
+			}
+
+			if ($token->getExpireDate() > (new \DateTime("-1 week"))) {
+				$this->revokeToken($str_token);
+				return $this->saveNewToken($user);
+			}
+
+			return $token;
+		} catch (\Exception $exception) {
+			throw $exception;
+		}
+	}
+
 	private function generateUniqueToken(): string {
 		$token = bin2hex(openssl_random_pseudo_bytes(20));
 

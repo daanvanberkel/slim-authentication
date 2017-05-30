@@ -21,6 +21,12 @@ class UserMiddleware {
 		        $user = DvbSlimAuthentication::getInstance()->getModel()->getUser($_SESSION['dvb_id_user']);
 	        } elseif (isset($_COOKIE['dvb_remember_me'])) {
         		$user = DvbSlimAuthentication::getInstance()->getRememberTokenModel()->getUserByToken($_COOKIE['dvb_remember_me']);
+
+        		$new_token = DvbSlimAuthentication::getInstance()->getRememberTokenModel()->renewToken($user, $_COOKIE['dvb_remember_me']);
+
+        		if ($new_token->getToken() != $_COOKIE['dvb_remember_me']) {
+			        setcookie('dvb_remember_me', $new_token->getToken(), $new_token->getExpireDate()->getTimestamp(), '/', $request->getUri()->getHost(), true, true);
+		        }
 	        } else {
         		throw new \Exception("An error occurred");
 	        }
