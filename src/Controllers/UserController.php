@@ -24,6 +24,7 @@ class UserController {
 			case 'dvb_login':
 				$email = $request->getParsedBodyParam('dvb_email');
 				$password = $request->getParsedBodyParam('dvb_password');
+				$two_factor = $request->getParsedBodyParam('dvb_two_factor');
 
 				try {
 					if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -48,10 +49,8 @@ class UserController {
 						return $response->write($two_factor_view);
 					}
 
-					if (DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled')) {
-						$two_factor_view = DvbSlimAuthentication::getInstance()->getConfigItem('two_factory_template');
-
-						return $response->write($two_factor_view);
+					if (DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled') && !$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $two_factor)) {
+						throw new \Exception("Two factor code not valid");
 					}
 
 					$_SESSION['dvb_loggedin'] = true;
@@ -82,29 +81,6 @@ class UserController {
 					if (!$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $verify_code)) {
 						throw new \Exception("Enter a correct verification code");
 					}
-
-					$_SESSION['dvb_loggedin'] = true;
-
-					return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_login_url'));
-				} catch (\Throwable $exception) {
-					MessageHelper::getInstance()->addError($exception->getMessage());
-
-					$response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
-					return $response->write($view);
-				}
-				break;
-
-			case 'dvb_two_factor':
-				try {
-					if (!isset($_SESSION['dvb_id_user']) || empty($_SESSION['dvb_id_user'])) {
-						throw new \Exception("User not found");
-					}
-
-					$user = $model->getUser((int) $_SESSION['dvb_id_user']);
-
-					if (!$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $request->getParsedBodyParam('dvb_two_factory'))) {
-					    throw new \Exception("Enter a valid two factor code");
-                    }
 
 					$_SESSION['dvb_loggedin'] = true;
 
