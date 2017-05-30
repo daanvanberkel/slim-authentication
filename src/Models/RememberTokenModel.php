@@ -42,13 +42,13 @@ class RememberTokenModel {
 				throw new \Exception("Remember token not found");
 			}
 
-			$revoke_date = \DateTime::createFromFormat('Y-m-d H:i:s', $result->revoke_date);
+			$expire_date = \DateTime::createFromFormat('Y-m-d H:i:s', $result->expire_date);
 
-			if (empty($revoke_date)) {
+			if (empty($expire_date)) {
 				throw new \Exception("Remember token has expired");
 			}
 
-			if ($revoke_date < (new \DateTime())) {
+			if ($expire_date < (new \DateTime())) {
 				throw new \Exception("Remember token has expired");
 			}
 
