@@ -168,6 +168,18 @@ class UserModel {
 		}
 	}
 
+	public function deleteUser(User $user) {
+		$query = "
+			DELETE FROM
+				" . DvbSlimAuthentication::getInstance()->getConfigItem('table') . "
+			WHERE
+				id_user = :id_user
+		";
+
+		$stmt = $this->pdo->prepare($query);
+		$stmt->execute(array(":id_user" => $user->getIdUser()));
+	}
+
 	public function generateSecret(User $user): User {
 		$user->setSecret(bin2hex(openssl_random_pseudo_bytes(10)));
 

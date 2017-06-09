@@ -122,65 +122,102 @@ class UserController {
             return $response->write($view);
         }
 
-        try {
-            $firstname = $request->getParsedBodyParam('dvb_firstname');
-            $lastname = $request->getParsedBodyParam('dvb_lastname');
-            $email = $request->getParsedBodyParam('dvb_email');
-            $password1 = $request->getParsedBodyParam('dvb_password1');
-            $password2 = $request->getParsedBodyParam('dvb_password2');
+        switch($request->getParsedBodyParam('dvb_submit')) {
+	        case 'dvb_two_factor_verify':
+		        try {
+			        if (!isset($_SESSION['dvb_id_user']) || empty($_SESSION['dvb_id_user'])) {
+				        throw new \Exception("User not found");
+			        }
 
-            if (
-                empty($firstname) ||
-                empty($lastname) ||
-                empty($email) ||
-                empty($password1) ||
-                empty($password2)
-            ) {
-                throw new \Exception("Please fill in all fields");
-            }
+			        $user = $model->getUser((int) $_SESSION['dvb_id_user']);
 
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                throw new \Exception("Enter a valid email");
-            }
+			        $verify_code = $request->getParsedBodyParam('dvb_verify');
 
-            if (!preg_match('/[^\da-zA-Z]+/', $password1)) {
-                throw new \Exception("The password must contain at least one special character");
-            }
+			        if (empty($verify_code)) {
+				        throw new \Exception("Enter a verification code");
+			        }
 
-            if (!preg_match('/[A-Z]+/', $password1)) {
-                throw new \Exception("The password must contain at least one capital letter");
-            }
+			        if (!$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $verify_code)) {
+				        throw new \Exception("Enter a correct verification code");
+			        }
 
-            if (!preg_match('/[a-z]+/', $password1)) {
-                throw new \Exception("The password must contain at least one normal letter");
-            }
+			        return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_register_url'));
+		        } catch (\Throwable $exception) {
+		        	$model->deleteUser($model->getUser((int) $_SESSION['dvb_id_user']));
 
-            if (strlen($password1) < 8) {
-                throw new \Exception("The paassword must contain at least 8 characters");
-            }
+			        MessageHelper::getInstance()->addError($exception->getMessage());
 
-            if ($password1 != $password2) {
-                throw new \Exception("Please make sure the two passwords matches");
-            }
+			        $response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
+			        return $response->write($view);
+		        }
+		        break;
 
-            $user = new User();
+	        default:
+		        try {
+			        $firstname = $request->getParsedBodyParam('dvb_firstname');
+			        $lastname = $request->getParsedBodyParam('dvb_lastname');
+			        $email = $request->getParsedBodyParam('dvb_email');
+			        $password1 = $request->getParsedBodyParam('dvb_password1');
+			        $password2 = $request->getParsedBodyParam('dvb_password2');
 
-            $user
-                ->setFirstname($firstname)
-                ->setLastname($lastname)
-                ->setEmail($email)
-                ->setPassword($password1);
+			        if (
+				        empty($firstname) ||
+				        empty($lastname) ||
+				        empty($email) ||
+				        empty($password1) ||
+				        empty($password2)
+			        ) {
+				        throw new \Exception("Please fill in all fields");
+			        }
 
-            $user = $model->hashPassword($user);
+			        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+				        throw new \Exception("Enter a valid email");
+			        }
 
-            $model->saveUser($user);
+			        if (!preg_match('/[^\da-zA-Z]+/', $password1)) {
+				        throw new \Exception("The password must contain at least one special character");
+			        }
 
-            return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_register_url'));
-        } catch (\Throwable $exception) {
-            MessageHelper::getInstance()->addError($exception->getMessage());
+			        if (!preg_match('/[A-Z]+/', $password1)) {
+				        throw new \Exception("The password must contain at least one capital letter");
+			        }
 
-            $response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
-            return $response->write($view);
+			        if (!preg_match('/[a-z]+/', $password1)) {
+				        throw new \Exception("The password must contain at least one normal letter");
+			        }
+
+			        if (strlen($password1) < 8) {
+				        throw new \Exception("The password must contain at least 8 characters");
+			        }
+
+			        if ($password1 != $password2) {
+				        throw new \Exception("Please make sure the two passwords matches");
+			        }
+
+			        $user = new User();
+
+			        $user
+				        ->setFirstname($firstname)
+				        ->setLastname($lastname)
+				        ->setEmail($email)
+				        ->setPassword($password1);
+
+			        $user = $model->hashPassword($user);
+			        $user = $model->saveUser($user);
+			        $user = $model->generateTwoFactorSecret($user);
+			        $user = $model->saveUser($user);
+
+			        $_SESSION['dvb_id_user'] = $user->getIdUser();
+
+			        $two_factor_view = sprintf(DvbSlimAuthentication::getInstance()->getConfigItem('two_factory_secret_template'), $model->getTwoFactorInstance()->getQRCodeImageAsDataUri($user->getName(), $user->getTwoFactorCode()));
+
+			        return $response->write($two_factor_view);
+		        } catch (\Throwable $exception) {
+			        MessageHelper::getInstance()->addError($exception->getMessage());
+
+			        $response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
+			        return $response->write($view);
+		        }
         }
     }
 
