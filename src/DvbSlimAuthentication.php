@@ -66,10 +66,12 @@ class DvbSlimAuthentication {
 			"enable_registration"         => true,
 			"login_template"              => '<form method="post"><input type="email" name="dvb_email" placeholder="Email" /><input type="password" name="dvb_password" placeholder="Password" /><input type="text" name="dvb_two_factory" placeholder="Two factory code" /><button type="submit" name="dvb_submit" value="dvb_login">Login</button></form>',
 			"register_template"           => '<form method="post"><input type="email" name="dvb_email" placeholder="Email" /><input type="password" name="dvb_password1" placeholder="Password" /><input type="password" name="dvb_password2" placeholder="Password verify" /><input type="text" name="dvb_firstname" placeholder="Firstname" /><input type="text" name="dvb_lastname" placeholder="Lastname" /><button type="submit" name="dvb_submit" value="dvb_register">Register</button></form>',
-			"two_factory_secret_template" => '<form method="post"><p>Scan the QR-code with the Google Authenticator app and enter the verification code below</p><img src="%s" /><input type="text" name="dvb_verify" placeholder="Verification code" /><button type="submit" name="dvb_submit" value="dvb_two_factor_verify">Verify</button></form>',
+			"two_factor_secret_template"  => '<form method="post"><p>Scan the QR-code with the Google Authenticator app and enter the verification code below</p><input type="hidden" name="dvb_two_factor_secret" value="%s" /><img src="%s" /><input type="text" name="dvb_verify" placeholder="Verification code" /><button type="submit" name="dvb_submit" value="dvb_two_factor_verify">Verify</button></form>',
+			"two_factor_error_message"    => '<p><a href="%s">Try again</a></p>',
 			"after_login_url"             => '/',
             "after_register_url" => '/login',
-            "login_url" => "/login"
+            "login_url" => "/login",
+            "two_factor_setup_url" => '/two-factor-setup'
 		);
 
 		foreach ($default_config as $key => $value) {

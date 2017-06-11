@@ -21,89 +21,47 @@ class UserController {
 			return $response->write($view);
 		}
 
-		switch($request->getParsedBodyParam('dvb_submit')) {
-			case 'dvb_login':
-				$email = $request->getParsedBodyParam('dvb_email');
-				$password = $request->getParsedBodyParam('dvb_password');
-				$two_factor = $request->getParsedBodyParam('dvb_two_factor');
-				$remember_me = (bool) $request->getParsedBodyParam('dvb_remember_me', false);
+        $email = $request->getParsedBodyParam('dvb_email');
+        $password = $request->getParsedBodyParam('dvb_password');
+        $two_factor = $request->getParsedBodyParam('dvb_two_factor');
+        $remember_me = (bool) $request->getParsedBodyParam('dvb_remember_me', false);
 
-				try {
-					if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-						throw new \Exception("Enter a valid email");
-					}
+        try {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new \Exception("Enter a valid email");
+            }
 
-					$user = $model->getUserByEmail($email);
+            $user = $model->getUserByEmail($email);
 
-					if (!$model->validatePassword($user, $password)) {
-						throw new \Exception("Password not valid");
-					}
+            if (!$model->validatePassword($user, $password)) {
+                throw new \Exception("Password not valid");
+            }
 
-					$_SESSION['dvb_id_user'] = $user->getIdUser();
+            $_SESSION['dvb_id_user'] = $user->getIdUser();
 
-					if (empty($user->getTwoFactorCode()) && DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled')) {
-						$user = $model->generateTwoFactorSecret($user);
+            if (empty($user->getTwoFactorCode()) && DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled')) {
+                return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_setup_url'));
+            }
 
-                        $user = $model->saveUser($user);
+            if (DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled') && !$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $two_factor)) {
+                throw new \Exception("Two factor code not valid");
+            }
 
-						$two_factor_view = sprintf(DvbSlimAuthentication::getInstance()->getConfigItem('two_factory_secret_template'), $model->getTwoFactorInstance()->getQRCodeImageAsDataUri($user->getName(), $user->getTwoFactorCode()));
+            if ($remember_me) {
+                $token = $remember_model->saveNewToken($user);
 
-						return $response->write($two_factor_view);
-					}
+                setcookie('dvb_remember_me', $token->getToken(), $token->getExpireDate()->getTimestamp(), '/', $request->getUri()->getHost(), true, true);
+            }
 
-					if (DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled') && !$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $two_factor)) {
-						throw new \Exception("Two factor code not valid");
-					}
+            $_SESSION['dvb_loggedin'] = true;
 
-					if ($remember_me) {
-						$token = $remember_model->saveNewToken($user);
+            return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_login_url'));
+        } catch (\Throwable $exception) {
+            MessageHelper::getInstance()->addError($exception->getMessage());
 
-						setcookie('dvb_remember_me', $token->getToken(), $token->getExpireDate()->getTimestamp(), '/', $request->getUri()->getHost(), true, true);
-					}
-
-					$_SESSION['dvb_loggedin'] = true;
-
-					return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_login_url'));
-				} catch (\Throwable $exception) {
-					MessageHelper::getInstance()->addError($exception->getMessage());
-
-					$response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
-					return $response->write($view);
-				}
-				break;
-
-			case 'dvb_two_factor_verify':
-				try {
-					if (!isset($_SESSION['dvb_id_user']) || empty($_SESSION['dvb_id_user'])) {
-						throw new \Exception("User not found");
-					}
-
-					$user = $model->getUser((int) $_SESSION['dvb_id_user']);
-
-					$verify_code = $request->getParsedBodyParam('dvb_verify');
-
-					if (empty($verify_code)) {
-						throw new \Exception("Enter a verification code");
-					}
-
-					if (!$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $verify_code)) {
-						throw new \Exception("Enter a correct verification code");
-					}
-
-					$_SESSION['dvb_loggedin'] = true;
-
-					return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_login_url'));
-				} catch (\Throwable $exception) {
-					MessageHelper::getInstance()->addError($exception->getMessage());
-
-					$response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
-					return $response->write($view);
-				}
-				break;
-
-			default:
-				return $response->write("Action unknown");
-		}
+            $response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
+            return $response->write($view);
+        }
 	}
 
 	public function register(Request $request, Response $response): Response {
@@ -122,102 +80,109 @@ class UserController {
             return $response->write($view);
         }
 
-        switch($request->getParsedBodyParam('dvb_submit')) {
-	        case 'dvb_two_factor_verify':
-		        try {
-			        if (!isset($_SESSION['dvb_id_user']) || empty($_SESSION['dvb_id_user'])) {
-				        throw new \Exception("User not found");
-			        }
+        try {
+            $firstname = $request->getParsedBodyParam('dvb_firstname');
+            $lastname = $request->getParsedBodyParam('dvb_lastname');
+            $email = $request->getParsedBodyParam('dvb_email');
+            $password1 = $request->getParsedBodyParam('dvb_password1');
+            $password2 = $request->getParsedBodyParam('dvb_password2');
 
-			        $user = $model->getUser((int) $_SESSION['dvb_id_user']);
+            if (
+                empty($firstname) ||
+                empty($lastname) ||
+                empty($email) ||
+                empty($password1) ||
+                empty($password2)
+            ) {
+                throw new \Exception("Please fill in all fields");
+            }
 
-			        $verify_code = $request->getParsedBodyParam('dvb_verify');
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new \Exception("Enter a valid email");
+            }
 
-			        if (empty($verify_code)) {
-				        throw new \Exception("Enter a verification code");
-			        }
+            if (!preg_match('/[^\da-zA-Z]+/', $password1)) {
+                throw new \Exception("The password must contain at least one special character");
+            }
 
-			        if (!$model->getTwoFactorInstance()->verifyCode($user->getTwoFactorCode(), $verify_code)) {
-				        throw new \Exception("Enter a correct verification code");
-			        }
+            if (!preg_match('/[A-Z]+/', $password1)) {
+                throw new \Exception("The password must contain at least one capital letter");
+            }
 
-			        return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_register_url'));
-		        } catch (\Throwable $exception) {
-		        	$model->deleteUser($model->getUser((int) $_SESSION['dvb_id_user']));
+            if (!preg_match('/[a-z]+/', $password1)) {
+                throw new \Exception("The password must contain at least one normal letter");
+            }
 
-			        MessageHelper::getInstance()->addError($exception->getMessage());
+            if (strlen($password1) < 8) {
+                throw new \Exception("The password must contain at least 8 characters");
+            }
 
-			        $response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
-			        return $response->write($view);
-		        }
-		        break;
+            if ($password1 != $password2) {
+                throw new \Exception("Please make sure the two passwords matches");
+            }
 
-	        default:
-		        try {
-			        $firstname = $request->getParsedBodyParam('dvb_firstname');
-			        $lastname = $request->getParsedBodyParam('dvb_lastname');
-			        $email = $request->getParsedBodyParam('dvb_email');
-			        $password1 = $request->getParsedBodyParam('dvb_password1');
-			        $password2 = $request->getParsedBodyParam('dvb_password2');
+            $user = new User();
 
-			        if (
-				        empty($firstname) ||
-				        empty($lastname) ||
-				        empty($email) ||
-				        empty($password1) ||
-				        empty($password2)
-			        ) {
-				        throw new \Exception("Please fill in all fields");
-			        }
+            $user
+                ->setFirstname($firstname)
+                ->setLastname($lastname)
+                ->setEmail($email)
+                ->setPassword($password1);
 
-			        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-				        throw new \Exception("Enter a valid email");
-			        }
+            $user = $model->hashPassword($user);
+            $user = $model->saveUser($user);
 
-			        if (!preg_match('/[^\da-zA-Z]+/', $password1)) {
-				        throw new \Exception("The password must contain at least one special character");
-			        }
+            $_SESSION['dvb_id_user'] = $user->getIdUser();
+            $_SESSION['dvb_register'] = true;
 
-			        if (!preg_match('/[A-Z]+/', $password1)) {
-				        throw new \Exception("The password must contain at least one capital letter");
-			        }
+            return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_setup_url'));
+        } catch (\Throwable $exception) {
+            MessageHelper::getInstance()->addError($exception->getMessage());
 
-			        if (!preg_match('/[a-z]+/', $password1)) {
-				        throw new \Exception("The password must contain at least one normal letter");
-			        }
+            $response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
+            return $response->write($view);
+        }
+    }
 
-			        if (strlen($password1) < 8) {
-				        throw new \Exception("The password must contain at least 8 characters");
-			        }
+    public function twoFactorSetup(Request $request, Response $response): Response {
+	    $model = DvbSlimAuthentication::getInstance()->getModel();
+	    $view = DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_secret_template');
 
-			        if ($password1 != $password2) {
-				        throw new \Exception("Please make sure the two passwords matches");
-			        }
+        try {
+            $user = $model->getUser(($_SESSION['dvb_id_user'] ?? 0));
 
-			        $user = new User();
+            $submit = $request->getParsedBodyParam('dvb_submit');
+            $secret = $request->getParsedBodyParam('dvb_two_factor_secret');
+            $verify = $request->getParsedBodyParam('dvb_verify');
 
-			        $user
-				        ->setFirstname($firstname)
-				        ->setLastname($lastname)
-				        ->setEmail($email)
-				        ->setPassword($password1);
+            if (empty($submit) || empty($secret) || empty($verify)) {
+                $user = $model->generateTwoFactorSecret($user);
 
-			        $user = $model->hashPassword($user);
-			        $user = $model->saveUser($user);
-			        $user = $model->generateTwoFactorSecret($user);
-			        $user = $model->saveUser($user);
+                $view = sprintf($view, $user->getTwoFactorCode(), $model->getTwoFactorInstance()->getQRCodeImageAsDataUri(DvbSlimAuthentication::getInstance()->getConfigItem('name'), $user->getTwoFactorCode()));
 
-			        $_SESSION['dvb_id_user'] = $user->getIdUser();
+                return $response->write($view);
+            }
 
-			        $two_factor_view = sprintf(DvbSlimAuthentication::getInstance()->getConfigItem('two_factory_secret_template'), $model->getTwoFactorInstance()->getQRCodeImageAsDataUri($user->getName(), $user->getTwoFactorCode()));
+            if (!$model->getTwoFactorInstance()->verifyCode($secret, $verify)) {
+                throw new \Exception("Verification code is not right");
+            }
 
-			        return $response->write($two_factor_view);
-		        } catch (\Throwable $exception) {
-			        MessageHelper::getInstance()->addError($exception->getMessage());
+            $user->setTwoFactorCode($secret);
+            $model->saveUser($user);
 
-			        $response = $response->write(MessageHelper::getInstance()->getMessagesHTML());
-			        return $response->write($view);
-		        }
+            if (isset($_SESSION['dvb_register']) && $_SESSION['dvb_register'] === true) {
+                unset($_SESSION['dvb_register']);
+
+                return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_register_url'));
+            }
+
+            $_SESSION['dvb_loggedin'] = true;
+
+            return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_login_url'));
+        } catch (\Exception $exception) {
+            MessageHelper::getInstance()->addError($exception->getMessage());
+
+            return $response->write(MessageHelper::getInstance()->getMessagesHTML() . sprintf(DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_error_message'), DvbSlimAuthentication::getInstance()->getConfigItem('login_url')));
         }
     }
 
