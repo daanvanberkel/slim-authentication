@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "00b6c02ac81e91ee7142a221f38af166",
-    "content-hash": "da3c84d71d51a4875d3f6196e6aaaa50",
+    "hash": "99c0395f64638f5145f797a67aedc942",
+    "content-hash": "66eb1c771b2a4dcd103b65be7bc51e44",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -40,16 +40,16 @@
         },
         {
             "name": "daanvanberkel/php-messages",
-            "version": "0.0.1",
+            "version": "0.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/daanvanberkel/php-messages.git",
-                "reference": "79efe16c1194769c58ffc3f6cd833075af66a1fc"
+                "reference": "03a9f9131e82510451d8d38a7053a67d0ea1d042"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/daanvanberkel/php-messages/zipball/79efe16c1194769c58ffc3f6cd833075af66a1fc",
-                "reference": "79efe16c1194769c58ffc3f6cd833075af66a1fc",
+                "url": "https://api.github.com/repos/daanvanberkel/php-messages/zipball/03a9f9131e82510451d8d38a7053a67d0ea1d042",
+                "reference": "03a9f9131e82510451d8d38a7053a67d0ea1d042",
                 "shasum": ""
             },
             "require": {
@@ -80,7 +80,7 @@
                 "messages",
                 "notifications"
             ],
-            "time": "2017-05-06 08:32:24"
+            "time": "2017-07-23 10:19:20"
         },
         {
             "name": "nikic/fast-route",
@@ -127,25 +127,29 @@
         },
         {
             "name": "pimple/pimple",
-            "version": "v3.0.2",
+            "version": "v3.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/silexphp/Pimple.git",
-                "reference": "a30f7d6e57565a2e1a316e1baf2a483f788b258a"
+                "reference": "4d45fb62d96418396ec58ba76e6f065bca16e10a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/silexphp/Pimple/zipball/a30f7d6e57565a2e1a316e1baf2a483f788b258a",
-                "reference": "a30f7d6e57565a2e1a316e1baf2a483f788b258a",
+                "url": "https://api.github.com/repos/silexphp/Pimple/zipball/4d45fb62d96418396ec58ba76e6f065bca16e10a",
+                "reference": "4d45fb62d96418396ec58ba76e6f065bca16e10a",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.0"
+                "php": ">=5.3.0",
+                "psr/container": "^1.0"
+            },
+            "require-dev": {
+                "symfony/phpunit-bridge": "^3.2"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "3.0.x-dev"
+                    "dev-master": "3.2.x-dev"
                 }
             },
             "autoload": {
@@ -169,7 +173,7 @@
                 "container",
                 "dependency injection"
             ],
-            "time": "2015-09-11 15:10:35"
+            "time": "2017-07-23 07:32:15"
         },
         {
             "name": "psr/container",

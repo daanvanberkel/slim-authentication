@@ -3,10 +3,10 @@
     "description": "PHP Slim authentication",
     "type": "library",
     "require": {
-        "slim/slim": "^3.8",
-        "daanvanberkel/php-messages": "^0.0.1",
+        "slim/slim": "*",
+        "daanvanberkel/php-messages": "*",
         "php": ">=7.0",
-        "robthree/twofactorauth": "^1.6"
+        "robthree/twofactorauth": "*"
     },
     "license": "MIT",
     "authors": [
