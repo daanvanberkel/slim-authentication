@@ -145,6 +145,10 @@ class UserController {
     }
 
     public function twoFactorSetup(Request $request, Response $response): Response {
+	    if (DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_enabled') !== true) {
+            return $response->withRedirect(DvbSlimAuthentication::getInstance()->getConfigItem('after_register_url'));
+        }
+
 	    $model = DvbSlimAuthentication::getInstance()->getModel();
 	    $view = DvbSlimAuthentication::getInstance()->getConfigItem('two_factor_secret_template');
 
